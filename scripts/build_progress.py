@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOTS = ["Livros", "Index"]
 README = Path("README.md")
@@ -8,6 +9,32 @@ END = "<!-- END_PROGRESS -->"
 
 
 # ---------- Helpers ----------
+IGNORE_EXTENSIONS = {
+    ".png",".jpg",".jpeg",".webp",".gif",".pdf",".zip",".rar"
+}
+
+
+def is_translation_file(path: Path):
+    if path.is_dir():
+        return False
+
+    # ignore hidden files
+    if path.name.startswith("."):
+        return False
+
+    ext = path.suffix.lower()
+
+    # ignore binaries
+    if ext in IGNORE_EXTENSIONS:
+        return False
+
+    # allow md OR extensionless files
+    return True
+
+def progress_bar(percent, size=40):
+    filled = int(size * percent / 100)
+    return "█" * filled + "░" * (size - filled)
+
 
 def translated(file: Path):
     try:
@@ -16,16 +43,16 @@ def translated(file: Path):
         return False
 
 
-def progress_bar(percent, size=40):
-    filled = int(size * percent / 100)
-    return "█" * filled + "░" * (size - filled)
-
-
 def scan_folder(folder: Path):
-    files = list(folder.rglob("*.md"))
+    files = [f for f in folder.rglob("*") if is_translation_file(f)]
     done = [f for f in files if translated(f)]
     return done, files
 
+def natural_key(text):
+    return [
+        int(part) if part.isdigit() else part.lower()
+        for part in re.split(r'(\d+)', str(text))
+    ]
 
 # ---------- Build report ----------
 
@@ -52,7 +79,7 @@ lines.append("\n---\n")
 livros = Path("Livros")
 lines.append("## 📚 Livros\n")
 
-for book in sorted([p for p in livros.iterdir() if p.is_dir()]):
+for book in sorted([p for p in livros.iterdir() if p.is_dir()] , key=lambda x: natural_key(x.name)):
 
     done, files = scan_folder(book)
     percent = (len(done)/len(files)*100) if files else 0
@@ -61,7 +88,7 @@ for book in sorted([p for p in livros.iterdir() if p.is_dir()]):
     lines.append(progress_bar(percent, 30))
 
     # chapters
-    for chapter in sorted([c for c in book.iterdir() if c.is_dir()]):
+    for chapter in sorted([c for c in book.iterdir() if c.is_dir()] , key=lambda x: natural_key(x.name)):
         c_done, c_files = scan_folder(chapter)
         if not c_files:
             continue
@@ -81,7 +108,7 @@ for book in sorted([p for p in livros.iterdir() if p.is_dir()]):
 index = Path("Index")
 lines.append("\n## 🗂 Index\n")
 
-for cat in sorted([p for p in index.iterdir() if p.is_dir()]):
+for cat in sorted([p for p in index.iterdir() if p.is_dir()] , key=lambda x: natural_key(x.name)):
     done, files = scan_folder(cat)
     percent = (len(done)/len(files)*100) if files else 0
     lines.append(f"- **{cat.name}** — {percent:.0f}%")
@@ -96,7 +123,7 @@ lines.append("\n---\n")
 lines.append("## ❌ Untranslated files\n")
 
 for f in sorted(untranslated_files):
-    lines.append(str(f).replace("\\", "/"))
+    lines.append("- "+str(f).replace("\\", "/"))
 
 
 progress_block = "\n".join(lines)
