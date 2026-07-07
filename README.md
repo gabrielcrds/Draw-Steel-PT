@@ -11,12 +11,15 @@ Dentro do diretório **Livros** podes encontrar os livros divididos por capítul
 ## 📊 Progresso
 
 <!-- START_PROGRESS -->
-**Overall: 149/227 — 65.6%**
+**Overall: 147/225 — 65.3%**
 ██████████████████████████░░░░░░░░░░░░░░
 
 ---
 
 ## 📚 Livros
+
+### Coração de Fera — 100%
+██████████████████████████████
 
 ### Heróis — 100%
 ██████████████████████████████
